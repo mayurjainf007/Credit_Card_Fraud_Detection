@@ -15,8 +15,6 @@ The system implements a microservices architecture with four main components:
 - Real-time Processing Engine (Spark Streaming)
 - Monitoring Dashboard
 
-![System Architecture Diagram](https://via.placeholder.com/600x400 "System Architecture Diagram")
-
 ### 2.2 Technical Stack
 - Apache Kafka for message queuing and data streaming
 - Apache Spark for distributed computing and ML model training

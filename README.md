@@ -1,4 +1,4 @@
-# Real-Time Credit Card Fraud Detection with Dynamic Schema and Dashboard
+# Real-Time Credit Card Fraud Detection
 
 This project demonstrates how to perform real-time credit card fraud detection using Apache Kafka, Spark Streaming, and Flask. The system dynamically adapts to schema changes in the input dataset, detects fraudulent transactions in real-time, and displays the results on a web dashboard.
 

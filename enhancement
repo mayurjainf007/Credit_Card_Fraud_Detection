@@ -1,0 +1,14 @@
+Real-Time Fraud Detection System
+Description: Developed a scalable, real-time fraud detection system leveraging big data technologies, machine learning, and cloud infrastructure to analyze high-frequency transaction data.
+
+Key Technologies: Apache Kafka, Apache Spark, AWS (EMR, S3, EC2, Lambda, Cognito), Docker, Kubernetes, Airflow, TensorFlow, Flask, Grafana, Prometheus, ELK Stack
+
+Responsibilities and Achievements:
+
+Designed and implemented a distributed fraud detection pipeline using Kafka for real-time data streaming and Spark for low-latency processing, achieving 95% detection accuracy.
+Integrated deep learning models (Transformers, autoencoders) for dynamic fraud detection, handling evolving fraud patterns and reducing false positives.
+Enhanced system reliability and scalability by deploying on AWS with S3 for data storage, EMR for distributed processing, and EC2 for hosting the backend API.
+Containerized the application with Docker and orchestrated with Kubernetes, achieving efficient resource management and streamlined deployment.
+Set up real-time monitoring and centralized logging using Prometheus, Grafana, and ELK Stack, enabling proactive issue resolution and performance optimization.
+Built a responsive dashboard for transaction monitoring and visualization, implementing secure access control with AWS Cognito.
+Automated CI/CD pipeline using Jenkins and GitHub Actions to streamline development, testing, and deployment processes, enhancing project efficiency.

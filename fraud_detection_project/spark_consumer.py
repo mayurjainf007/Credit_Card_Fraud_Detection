@@ -1,72 +1,89 @@
+
+import threading
+import time
 from pyspark.sql import SparkSession
-from pyspark.ml.classification import LogisticRegressionModel
+from pyspark.ml.classification import LogisticRegressionModel, RandomForestClassificationModel
 from pyspark.ml.feature import VectorAssembler, StandardScalerModel
 from pyspark.sql.functions import col, from_json
-from pyspark.sql.types import StructType
+from pyspark.sql.types import StructType, DoubleType, StringType
 import requests
 import json
 
-# Step 1: Initialize Spark session
-spark = SparkSession.builder \
-    .appName("RealTimeFraudDetection") \
-    .getOrCreate()
+# Initialize Spark session
+spark = SparkSession.builder.appName("RealTimeFraudDetection").getOrCreate()
 
-# Step 2: Load the schema dynamically from sample data or configuration
-sample_data = spark.read.csv("fraud_detection_project/creditcard.csv", header=True, inferSchema=True)
-schema = StructType.fromJson(json.loads(sample_data.schema.json()))
+# Define schema based on dataset
+schema = StructType() \
+    .add("trans_date_trans_time", StringType()) \
+    .add("cc_num", StringType()) \
+    .add("merchant", StringType()) \
+    .add("category", StringType()) \
+    .add("amt", DoubleType()) \
+    .add("first", StringType()) \
+    .add("last", StringType()) \
+    .add("is_fraud", DoubleType())
 
-# Step 3: Load the trained ML model and scaler model
-model = LogisticRegressionModel.load("fraud_detection_project/fraud_detection_model")
-scaler_model = StandardScalerModel.load("fraud_detection_project/scaler_model")
+# Load models from new model directory
+logistic_model = LogisticRegressionModel.load("fraud_detection_project/model/logisticregression")
+rf_model = RandomForestClassificationModel.load("fraud_detection_project/model/randomforest")
+scaler_model = StandardScalerModel.load("fraud_detection_project/model/scalermodel")
 
-# Step 4: Read real-time transactions from Kafka
+# Read data from Kafka
 transactions = spark.readStream \
     .format("kafka") \
     .option("kafka.bootstrap.servers", "localhost:9092") \
     .option("subscribe", "credit_card_transactions") \
     .load()
 
-# Step 5: Deserialize Kafka value and apply schema
+# Deserialize Kafka data
 transactions = transactions.selectExpr("CAST(value AS STRING)") \
     .select(from_json(col("value"), schema).alias("data")) \
     .select("data.*")
 
-# Step 6: Dynamically identify feature columns (excluding label column if present)
-label_col = "Class" if "Class" in transactions.columns else None
-feature_cols = [col for col in transactions.columns if col != label_col]
+# Cast columns to DoubleType and handle nulls
+feature_cols = [col for col in transactions.columns if col != "is_fraud"]
+for col_name in feature_cols:
+    transactions = transactions.withColumn(col_name, col(col_name).cast(DoubleType()))
+transactions = transactions.na.fill(0, subset=feature_cols)
 
-# Step 7: Feature engineering with VectorAssembler
+# Assemble and scale features
 assembler = VectorAssembler(inputCols=feature_cols, outputCol="features")
 transaction_features = assembler.transform(transactions)
-
-# Step 8: Apply the pre-fitted scaler model
 scaled_data = scaler_model.transform(transaction_features)
 
-# Step 9: Apply the trained model to make predictions
-predictions = model.transform(scaled_data)
+# Predictions using both models
+predictions_lr = logistic_model.transform(scaled_data)
+predictions_rf = rf_model.transform(scaled_data)
 
-# Step 10: Filter fraudulent transactions and post them to the Flask server
+# Post fraudulent transactions detected by both models
 def post_fraud_transactions(batch_df, batch_id):
-    for row in batch_df.collect():
-        data = {"Time": row["Time"], "Amount": row["Amount"], "Prediction": row["prediction"]}
-        try:
-            response = requests.post("http://localhost:5000/add_transaction", json=data)
-            if response.status_code == 200:
-                print("Fraudulent transaction sent:", data)
-            else:
-                print("Failed to send transaction:", response.text)
-        except Exception as e:
-            print("Error posting transaction:", e)
+    try:
+        fraud_data_lr = batch_df.filter(batch_df["prediction"] == 1)  # Logistic Regression model
+        fraud_data_rf = batch_df.filter(batch_df["prediction"] == 1)  # Random Forest model
+        fraud_data = fraud_data_lr.union(fraud_data_rf).distinct()
+        
+        for row in fraud_data.collect():
+            data = {
+                "trans_date_trans_time": row["trans_date_trans_time"],
+                "amt": row["amt"],
+                "prediction": row["prediction"],
+                "first": row["first"],
+                "last": row["last"],
+                "category": row["category"],
+                "merchant": row["merchant"]
+            }
+            try:
+                response = requests.post("http://localhost:5000/add_transaction", json=data)
+                if response.status_code == 200:
+                    print("Transaction sent:", data)
+                else:
+                    print("Failed to send transaction:", response.text)
+            except Exception as e:
+                print("Error posting transaction:", e)
+    except Exception as e:
+        print(f"Error processing batch {batch_id}: {e}")
 
-fraud_transactions = predictions.filter(col("prediction") == 1)
-
-# Step 11: Write stream to console and trigger Flask update
-query = fraud_transactions \
-    .writeStream \
-    .foreachBatch(post_fraud_transactions) \
-    .outputMode("append") \
-    .start()
-
-# Step 12: Await termination
+# Start stream processing with batch processing function
+fraud_transactions = predictions_lr.filter(col("prediction") == 1)
+query = fraud_transactions.writeStream.foreachBatch(post_fraud_transactions).outputMode("append").start()
 query.awaitTermination()
-

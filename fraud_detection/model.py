@@ -5,16 +5,25 @@ from pyspark.ml.feature import VectorAssembler, StandardScaler
 from pyspark.ml.classification import LogisticRegression
 from pyspark.ml.tuning import CrossValidator, ParamGridBuilder
 from pyspark.ml.evaluation import BinaryClassificationEvaluator
-import pandas as pd
 from sklearn.linear_model import LogisticRegression as SklearnLR
 from sklearn.preprocessing import StandardScaler as SklearnScaler
+from modelx import run_original
+from result import run_report
 import pickle
+import os
+import pandas as pd
+
+DATA_FOLDER = "fraud_detection/data"
+OUTPUT_FOLDER = "fraud_detection/output"
+STATIC_FOLDER = "fraud_detection/static"
+MODEL_FOLDER = "fraud_detection/models"
+
 
 # Initialize Spark session
 spark = SparkSession.builder.appName("FraudDetectionModelTraining").getOrCreate()
 
 # Load and preprocess dataset
-data_path = "anydata.csv"
+data_path = os.path.join(DATA_FOLDER,"creditcard.csv")
 df = spark.read.csv(data_path, header=True, inferSchema=True)
 
 # Define label and features
@@ -43,27 +52,11 @@ evaluator = BinaryClassificationEvaluator(labelCol=label_col)
 cv = CrossValidator(estimator=lr, estimatorParamMaps=param_grid, evaluator=evaluator, numFolds=3)
 
 cv_model = cv.fit(train_data)
-cv_model.bestModel.write().overwrite().save("models/pyspark_logistic_regression")
-scaler_model.write().overwrite().save("models/pyspark_scaler")
+cv_model.bestModel.write().overwrite().save(os.path.join(MODEL_FOLDER, "pyspark_logistic_regression"))
+scaler_model.write().overwrite().save(os.path.join(MODEL_FOLDER, "pyspark_scaler"))
 
-print("PySpark model and scaler saved.")
-
-# Train a Scikit-Learn model and save as .pkl
-pandas_df = df.toPandas()
-X = pandas_df[feature_cols]
-y = pandas_df[label_col]
-
-# Standardize features (Scikit-Learn)
-sklearn_scaler = SklearnScaler()
-X_scaled = sklearn_scaler.fit_transform(X)
-
-# Logistic Regression (Scikit-Learn)
-sklearn_lr = SklearnLR()
-sklearn_lr.fit(X_scaled, y)
-
-# Save Scikit-Learn model
-with open("models/fraud_detection_model.pkl", "wb") as model_file:
-    pickle.dump((sklearn_lr, sklearn_scaler), model_file)
-
+print("PySpark model saved.")
+run_original()
 print("Scikit-Learn model saved.")
-
+run_report()
+print("Report Generated")

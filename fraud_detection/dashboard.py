@@ -16,7 +16,6 @@ CONSUMER_SCRIPT = "fraud_detection/consumer.py"
 DATA_FOLDER = "fraud_detection/data"
 OUTPUT_FOLDER = "fraud_detection/output"
 OUTPUT_FILE = os.path.join(OUTPUT_FOLDER, "fraudulent_transactions.csv")
-FLAG = False
 
 def run_producer(file_name):
     """Run the Kafka producer in a new terminal."""

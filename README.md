@@ -21,39 +21,58 @@ This project demonstrates how to perform real-time credit card fraud detection u
 
 ```
 fraud_detection_project/
-├── creditcard.csv                 # Dataset file for training and streaming
-├── README.md                      # Instructions and project overview
-├── kafka_producer.py              # Streams transactions to Kafka
-├── model.py                       # Model training script
-├── spark_consumer.py              # Streaming consumer for real-time detection
-├── dashboard.py                   # Flask server for the dashboard
-└── templates/
-    └── dashboard.html             # HTML template for the dashboard UI
-```
+root/
+├── project/
+│   ├── data/
+│   │   ├── test_data.csv
+│   │   └── creditcard.csv
+│   ├── models/
+│   │   ├── pyspark_logistic_regression
+│   │   ├── pyspark_scaler
+│   │   └── fraud_detection_model.pkl
+│   ├── output/
+│   │   └── fraudulent_transaction.csv
+│   ├── static/
+│   │   ├── roc_curve.png
+│   │   ├── amount_distribution.png
+│   │   ├── feature_importance.png
+│   │   ├── anomaly_detection.png
+│   │   ├── feature_importance.csv
+│   │   └── transactions_with_anomalies.csv
+│   ├── templates/
+│   │   └── dashboard.html
+│   ├── dashboard.py
+│   ├── producer.py
+│   ├── consumer.py
+│   ├── model.py
+│   ├── result.py
+├── ResearchPaper.pdf
+├── enhancement.txt
+├── Readme.md
 
 ## Setup and Execution
 
 ### 1. Start Kafka
    - **Start Zookeeper** (needed for Kafka):
      ```bash
-     bin/zookeeper-server-start.sh config/zookeeper.properties
+     $KAFKA_HOME/bin/zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties
      ```
    - **Start Kafka Server**:
      ```bash
-     bin/kafka-server-start.sh config/server.properties
+     $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
      ```
 
 ### 2. Create Kafka Topic
 Create a topic called `credit_card_transactions` for the transaction stream.
    ```bash
-   bin/kafka-topics.sh --create --topic credit_card_transactions --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+   $KAFKA_HOME/bin/kafka-topics.sh --create --topic credit_card_transactions --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
    ```
 
 ### 3. Train and Save the Models
 Run the following command to train the StandardScaler and Logistic Regression models. This script will also dynamically infer the schema based on `creditcard.csv`.
 
    ```bash
-   spark-submit fraud_detection_project/model.py
+   spark-submit fraud_detection/model.py
    ```
 
    - **What it Does**:
@@ -67,7 +86,7 @@ Run the following command to train the StandardScaler and Logistic Regression mo
 Start the Kafka producer script to simulate real-time transaction streaming from `creditcard.csv`.
 
    ```bash
-   python fraud_detection_project/kafka_producer.py
+   python fraud_detection/producer.py
    ```
 
    - **What it Does**:
@@ -78,7 +97,7 @@ Start the Kafka producer script to simulate real-time transaction streaming from
 Start the Spark consumer to read from Kafka, scale features, detect fraud, and send results to the Flask dashboard.
 
    ```bash
-   spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 fraud_detection_project/spark_consumer.py
+   spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 fraud_detection/consumer.py
    ```
 
    - **Explanation of Key Functions**:
@@ -92,7 +111,7 @@ Start the Spark consumer to read from Kafka, scale features, detect fraud, and s
 Start the Flask server to view real-time fraud detection results.
 
    ```bash
-   python fraud_detection_project/dashboard.py
+   python fraud_detection/dashboard.py
    ```
 
    - **What it Does**:
@@ -105,28 +124,6 @@ Start the Flask server to view real-time fraud detection results.
    - **Real-Time Fraud Detection Table**: Shows detected fraud transactions in a table format.
    - **CSV Download**: Click the “Download Fraudulent Transactions CSV” button to download detected fraud transactions as a CSV file.
 
-## Example Commands Summary
-```bash
-# Start Zookeeper
-bin/zookeeper-server-start.sh config/zookeeper.properties
-
-# Start Kafka
-bin/kafka-server-start.sh config/server.properties
-
-# Create Kafka topic
-bin/kafka-topics.sh --create --topic credit_card_transactions --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
-
-# Train and save models
-spark-submit fraud_detection_project/model.py
-
-# Start Kafka producer
-python fraud_detection_project/kafka_producer.py
-
-# Start Spark consumer
-spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 fraud_detection_project/spark_consumer.py
-
-# Start Flask dashboard
-python fraud_detection_project/dashboard.py
 ```
 
 ## Notes

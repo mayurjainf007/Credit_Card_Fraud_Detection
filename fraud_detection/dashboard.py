@@ -7,10 +7,18 @@ import time
 from prediction import main as run_prediction # Import the prediction function
 from producer import status
 
+if not os.path.exists("fraud_detection/static"):
+    os.mkdir("fraud_detection/static")
+if not os.path.exists("fraud_detection/models"):
+    os.mkdir("fraud_detection/models")
+if not os.path.exists("fraud_detection/output"):
+    os.mkdir("fraud_detection/output")
+
 app = Flask(__name__)
 
 # Paths
 VENV_ACTIVATION = "source /home/rootx/Desktop/venv/bin/activate"
+PREDICTION_SCRIPT = "fraud_detection/prediction.py"
 PRODUCER_SCRIPT = "fraud_detection/producer.py"
 CONSUMER_SCRIPT = "fraud_detection/consumer.py"
 DATA_FOLDER = "fraud_detection/data"
@@ -20,7 +28,7 @@ OUTPUT_FILE = os.path.join(OUTPUT_FOLDER, "fraudulent_transactions.csv")
 def run_producer(file_name):
     """Run the Kafka producer in a new terminal."""
     try:
-        command = f"""gnome-terminal -- bash -c "{VENV_ACTIVATION} && sleep 15 && python {PRODUCER_SCRIPT} {file_name}; exec bash" """
+        command = f"""gnome-terminal -- bash -c "{VENV_ACTIVATION} && spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 {PREDICTION_SCRIPT} {file_name} && python {PRODUCER_SCRIPT} {file_name}; exec bash" """
         subprocess.Popen(command, shell=True)
     except Exception as e:
         print(f"Error running producer: {e}")
@@ -48,14 +56,6 @@ def upload_data():
         print(f"Deleted existing file: {OUTPUT_FILE}")
 
     if file:
-        command = [
-            "spark-submit",
-            "--packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2",
-            'fraud_detection/prediction.py',
-            file.filename
-        ]
-        result = subprocess.run(command, capture_output=True, text=True)
-
         # Start Kafka producer and consumer in separate terminals
         producer_thread = threading.Thread(target=run_producer, args=(file.filename,))
         consumer_thread = threading.Thread(target=run_consumer)
@@ -71,8 +71,9 @@ def upload_data():
 def get_transactions():
     """Fetch fraudulent transactions."""
     if not os.path.isfile(OUTPUT_FILE):
-        time.sleep(30)
+        time.sleep(5)
     transactions = pd.read_csv(OUTPUT_FILE).to_dict(orient="records")
+    time.sleep(len(transactions)*30)
     return jsonify(transactions)
 
 @app.route('/download')

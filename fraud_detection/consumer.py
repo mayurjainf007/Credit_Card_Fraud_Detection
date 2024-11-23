@@ -7,6 +7,9 @@ import threading
 import os
 import pandas as pd
 
+if not os.path.exists("fraud_detection/output"):
+    os.mkdir("fraud_detection/output")
+
 # Initialize Spark session
 spark = SparkSession.builder.appName("FraudDetectionConsumer").getOrCreate()
 

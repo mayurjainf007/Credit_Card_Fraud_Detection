@@ -45,4 +45,3 @@ def run_original():
     with open(os.path.join(MODEL_FOLDER,"fraud_detection_model.pkl"), "wb") as model_file:
         pickle.dump(grid_search.best_estimator_, model_file)
 
-   

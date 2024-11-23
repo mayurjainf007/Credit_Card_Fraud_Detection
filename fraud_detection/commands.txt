@@ -1,0 +1,17 @@
+cd Desktop
+
+source venv/bin/activate
+spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.1.2 fraud_detection/model.py 
+
+source venv/bin/activate
+$KAFKA_HOME/bin/zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties
+
+source venv/bin/activate
+$KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
+
+source venv/bin/activate
+$KAFKA_HOME/bin/kafka-topics.sh --create --topic credit_card_transactions credit_card_transactions --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
+
+source venv/bin/activate
+python fraud_detection/dashboard.py 
+

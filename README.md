@@ -50,84 +50,97 @@ root/
 ├── enhancement.txt
 ├── Readme.md
 
-## Setup and Execution
+---
 
-### 1. Start Kafka
-   - **Start Zookeeper** (needed for Kafka):
-     ```bash
-     $KAFKA_HOME/bin/zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties
-     ```
-   - **Start Kafka Server**:
-     ```bash
-     $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
-     ```
+## **Setup and Execution Flow**
 
-### 2. Create Kafka Topic
-Create a topic called `credit_card_transactions` for the transaction stream.
+### **1. Environment Setup**
+1. **Activate Virtual Environment**:
+   Ensure all dependencies are isolated within a virtual environment for consistency.
+   ```bash
+   source venv/bin/activate
+   ```
+
+2. **Install Dependencies**:
+   Verify all necessary Python and Spark libraries are installed. Use `requirements.txt` if available.
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+---
+
+### **2. Model Training**
+1. **Train and Save Models**:
+   Run the following command to:
+   - Train the PySpark `StandardScaler` model for feature scaling.
+   - Train the Scikit-learn `Logistic Regression` model for fraud detection.
+   - Generate performance metrics (e.g., AUC-ROC curve, feature importance).
+   ```bash
+   spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 fraud_detection/model.py
+   ```
+
+   **Outputs**:
+   - `scaler_model` and `fraud_detection_model` saved to the `fraud_detection_project` directory.
+   - Visualization files (AUC-ROC curve, feature importance) generated for evaluation.
+
+---
+
+### **3. Start Kafka Services**
+1. **Start Zookeeper**:
+   ```bash
+   $KAFKA_HOME/bin/zookeeper-server-start.sh $KAFKA_HOME/config/zookeeper.properties
+   ```
+
+2. **Start Kafka Server**:
+   ```bash
+   $KAFKA_HOME/bin/kafka-server-start.sh $KAFKA_HOME/config/server.properties
+   ```
+
+3. **Create Kafka Topic**:
+   Define a topic for streaming transactions (`credit_card_transactions`):
    ```bash
    $KAFKA_HOME/bin/kafka-topics.sh --create --topic credit_card_transactions --bootstrap-server localhost:9092 --partitions 1 --replication-factor 1
    ```
 
-### 3. Train and Save the Models
-Run the following command to train the StandardScaler and Logistic Regression models. This script will also dynamically infer the schema based on `creditcard.csv`.
+---
 
-   ```bash
-   spark-submit fraud_detection/model.py
-   ```
-
-   - **What it Does**:
-     - **Schema Inference**: Reads and infers the schema from `creditcard.csv`.
-     - **Feature Scaling**: Trains a scaler model on the features and saves it as `scaler_model`.
-     - **Logistic Regression**: Trains the logistic regression model and saves it as `fraud_detection_model`.
-
-   - **Output**: Saved models (`scaler_model` and `fraud_detection_model`) in the `fraud_detection_project` directory.
-
-### 4. Run Kafka Producer
-Start the Kafka producer script to simulate real-time transaction streaming from `creditcard.csv`.
-
-   ```bash
-   python fraud_detection/producer.py
-   ```
-
-   - **What it Does**:
-     - Reads each transaction row from `creditcard.csv` and sends it to the Kafka topic `credit_card_transactions`.
-     - Simulates real-time streaming with a delay between each transaction.
-
-### 5. Run Spark Streaming Consumer with Dynamic Schema
-Start the Spark consumer to read from Kafka, scale features, detect fraud, and send results to the Flask dashboard.
-
-   ```bash
-   spark-submit --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.3.0 fraud_detection/consumer.py
-   ```
-
-   - **Explanation of Key Functions**:
-     - **Dynamic Schema**: Reads and adapts to the schema from the data at runtime.
-     - **Real-Time Processing**: Reads Kafka data in micro-batches, applies scaling and model inference, and filters fraudulent transactions.
-     - **Flask API Posting**: Sends each detected fraud transaction to the Flask dashboard API.
-
-   - **Expected Output**: Fraudulent transactions will be sent to the Flask dashboard for real-time display.
-
-### 6. Run the Flask Dashboard
-Start the Flask server to view real-time fraud detection results.
-
+### **4. Data Streaming and Processing**
+1. **Start Flask Dashboard**:
+   Launch the web server to monitor real-time fraud detection.
    ```bash
    python fraud_detection/dashboard.py
    ```
+   **URL**: [http://localhost:5000](http://localhost:5000)
 
-   - **What it Does**:
-     - Launches a web server on `http://localhost:5000`.
-     - Displays fraud transactions as they are detected and allows CSV download of flagged transactions.
+2. **Upload Data**:
+   Use the Flask dashboard to upload the dataset (`creditcard.csv`). This action triggers:
+   - The **Kafka Producer** to simulate transaction streaming.
+   - The **Spark Consumer** to process transactions and predict fraud.
 
-   - **Access URL**: Open a web browser and go to [http://localhost:5000](http://localhost:5000).
+   **Producer**:
+   Sends data row-by-row to the `credit_card_transactions` Kafka topic.
 
-### 7. Flask Dashboard Usage
-   - **Real-Time Fraud Detection Table**: Shows detected fraud transactions in a table format.
-   - **CSV Download**: Click the “Download Fraudulent Transactions CSV” button to download detected fraud transactions as a CSV file.
+   **Consumer**:
+   Reads from the Kafka topic, applies scaling and predictions, and flags fraudulent transactions in real-time.
 
-```
+---
 
-## Notes
-- Adjust file paths and Kafka configurations as needed for your setup.
-- Ensure that the dataset `creditcard.csv` is correctly placed in the `fraud_detection_project` directory.
+### **5. Real-Time Monitoring**
+1. **Fraud Detection Table**:
+   View flagged fraudulent transactions on the Flask dashboard.
 
-With these steps, your real-time fraud detection pipeline will be fully operational, displaying results on a dynamic dashboard and offering CSV downloads for detected fraudulent transactions.
+2. **Download Results**:
+   Download a CSV file of flagged transactions using the "Download Fraudulent Transactions CSV" button.
+
+---
+
+### **Notes**
+- **Dynamic Schema Handling**: The Spark consumer dynamically infers the schema from the data.
+- **Scalability**: Adjust Kafka topic configurations for higher throughput or additional partitions.
+- **Error Handling**: Ensure proper exception handling in all scripts for robust performance.
+- **Testing**: Test end-to-end functionality with a small subset of `creditcard.csv` before full-scale execution.
+
+---
+
+## **Summary**
+By following these steps, your real-time fraud detection pipeline will be operational, seamlessly integrating Spark, Kafka, and Flask components for both processing and visualization.

@@ -17,37 +17,6 @@ This project demonstrates how to perform real-time credit card fraud detection u
   - **Kafka-Python**: `pip install kafka-python`
 - **Dataset**: A credit card transactions dataset (e.g., `creditcard.csv`) should be placed in the `fraud_detection_project` directory.
 
-## Folder Structure
-'''
-fraud_detection_project/
-root/
-├── project/
-│   ├── data/
-│   │   ├── test_data.csv
-│   │   └── creditcard.csv
-│   ├── models/
-│   │   ├── pyspark_logistic_regression
-│   │   ├── pyspark_scaler
-│   │   └── fraud_detection_model.pkl
-│   ├── output/
-│   │   └── fraudulent_transaction.csv
-│   ├── static/
-│   │   ├── roc_curve.png
-│   │   ├── amount_distribution.png
-│   │   ├── feature_importance.png
-│   │   ├── anomaly_detection.png
-│   │   ├── feature_importance.csv
-│   │   └── transactions_with_anomalies.csv
-│   ├── templates/
-│   │   └── dashboard.html
-│   ├── dashboard.py
-│   ├── producer.py
-│   ├── consumer.py
-│   ├── model.py
-│   ├── result.py
-├── ResearchPaper.pdf
-├── enhancement.txt
-├── Readme.md
 ---
 
 ## **Setup and Execution Flow**

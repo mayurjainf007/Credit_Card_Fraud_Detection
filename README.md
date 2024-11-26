@@ -48,8 +48,6 @@ root/
 ├── ResearchPaper.pdf
 ├── enhancement.txt
 ├── Readme.md
-
----
 ---
 
 ## **Setup and Execution Flow**

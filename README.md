@@ -19,7 +19,6 @@ This project demonstrates how to perform real-time credit card fraud detection u
 
 ## Folder Structure
 
-```
 fraud_detection_project/
 root/
 ├── project/

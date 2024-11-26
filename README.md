@@ -18,7 +18,7 @@ This project demonstrates how to perform real-time credit card fraud detection u
 - **Dataset**: A credit card transactions dataset (e.g., `creditcard.csv`) should be placed in the `fraud_detection_project` directory.
 
 ## Folder Structure
-
+'''
 fraud_detection_project/
 root/
 ├── project/
@@ -48,7 +48,7 @@ root/
 ├── ResearchPaper.pdf
 ├── enhancement.txt
 ├── Readme.md
-
+'''
 ---
 
 ## **Setup and Execution Flow**

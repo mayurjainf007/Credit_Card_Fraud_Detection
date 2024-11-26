@@ -49,7 +49,7 @@ if __name__ == "__main__":
         sys.exit(1)
     
     input_file = os.path.join("fraud_detection/data",sys.argv[1])
-    output_file = "fraud_detection/output"
+    output_file = "fraud_detection/output/fraudulent_transaction.csv"
     
     # Load the model
     model_path = "fraud_detection/models/fraud_detection_model.pkl"
